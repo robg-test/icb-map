@@ -1,0 +1,41 @@
+# Registered patients and GP practices: NHS England, Patients Registered at a GP Practice, 2026-08-01. Area from ONS boundaries.
+code	name	Registered patients	GP practices	Area	Patients per km²
+E54000008	NHS Cheshire and Merseyside ICB	2,795,002	334	2,987 km²	936
+E54000010	NHS Staffordshire and Stoke-on-Trent ICB	1,202,730	140	2,708 km²	444
+E54000011	NHS Shropshire, Telford and Wrekin ICB	535,404	50	3,476 km²	154
+E54000013	NHS Lincolnshire ICB	821,163	81	5,912 km²	139
+E54000015	NHS Leicester, Leicestershire and Rutland ICB	1,223,531	127	2,542 km²	481
+E54000018	NHS Coventry and Warwickshire ICB	1,109,047	118	2,070 km²	536
+E54000019	NHS Herefordshire and Worcestershire ICB	831,574	78	3,908 km²	213
+E54000029	NHS North East London ICB	2,436,868	261	320 km²	7,605
+E54000030	NHS South East London ICB	2,082,825	189	348 km²	5,992
+E54000031	NHS South West London ICB	1,742,750	171	296 km²	5,891
+E54000032	NHS Kent and Medway ICB	2,036,209	175	3,721 km²	547
+E54000036	NHS Cornwall and the Isles of Scilly ICB	604,034	55	3,550 km²	170
+E54000037	NHS Devon ICB	1,290,112	116	6,687 km²	193
+E54000038	NHS Somerset ICB	603,757	56	3,441 km²	175
+E54000039	NHS Bristol, North Somerset and South Gloucestershire ICB	1,086,670	70	978 km²	1,111
+E54000040	NHS Bath and North East Somerset, Swindon and Wiltshire ICB	1,008,390	83	3,855 km²	262
+E54000041	NHS Dorset ICB	823,658	68	2,645 km²	311
+E54000043	NHS Gloucestershire ICB	697,687	64	2,645 km²	264
+E54000048	NHS Lancashire and South Cumbria ICB	1,863,692	193	4,968 km²	375
+E54000050	NHS North East and North Cumbria ICB	3,218,502	337	13,589 km²	237
+E54000051	NHS Humber and North Yorkshire ICB	1,804,958	153	10,609 km²	170
+E54000054	NHS West Yorkshire ICB	2,673,396	258	3,059 km²	874
+E54000055	NHS Birmingham and Solihull ICB	1,624,434	175	445 km²	3,653
+E54000057	NHS Greater Manchester ICB	3,284,558	406	1,272 km²	2,583
+E54000058	NHS Derby and Derbyshire ICB	1,141,445	107	2,620 km²	436
+E54000059	NHS Northamptonshire ICB	846,884	64	2,359 km²	359
+E54000060	NHS Nottingham and Nottinghamshire ICB	1,264,971	125	2,152 km²	588
+E54000061	NHS South Yorkshire ICB	1,516,372	168	1,546 km²	981
+E54000062	NHS Black Country ICB	1,329,925	169	356 km²	3,738
+E54000065	NHS Central East ICB	3,511,035	266	6,620 km²	530
+E54000066	NHS Essex ICB	2,010,486	205	3,644 km²	552
+E54000067	NHS Hampshire and Isle of Wight ICB	2,149,718	144	4,135 km²	520
+E54000068	NHS Norfolk and Suffolk ICB	1,790,661	161	9,137 km²	196
+E54000069	NHS Surrey and Sussex ICB	3,122,389	260	5,437 km²	574
+E54000070	NHS Thames Valley ICB	2,491,978	192	5,328 km²	468
+E54000071	NHS West and North London ICB	4,661,093	510	604 km²	7,717
+N92000002	Northern Ireland	--	--	14,248 km²	--
+S92000003	Scotland	--	--	78,302 km²	--
+W92000004	Wales	--	--	20,703 km²	--
