@@ -23,9 +23,10 @@ working directory.
 |---|---|
 | WASD (+ shift) | walk / run, relative to the camera |
 | drag / arrow keys | orbit |
+| right-drag | slide the map |
 | wheel | zoom |
 | tab | follow camera on/off |
-| space | auto-spin |
+| space | focus: show only the ICB he is in |
 | P | region panel on/off |
 | R | reset view and walker |
 | Esc | quit |
@@ -122,7 +123,22 @@ retried one axis at a time so the coast is slid along rather than stuck against.
 
 At this scale one world unit is about 61 km, so a person would be far under a
 pixel. The figure is a board-game piece — roughly as tall as the slab is thick —
-not a man in a landscape.
+not a man in a landscape, and it is that same size wherever it stands: the
+country is the thing with a scale on it, and a piece that grew and shrank as you
+walked read as a bug.
+
+Focus mode is the one exception, and it moves both sizes and his pace. Alone on screen a
+small ICB has nothing to be compared against, so the slab is squashed towards
+55% of its thickness as the region gets smaller (South West London is 0.27 world
+units across against Scotland's 4.7), and the figure is cut to as little as 30%
+of full — at full size he is taller than that borough is wide. Both are drawing
+scales only, eased in and out; the mesh on disk is one uniform thickness.
+
+Walking speed goes with it. At the full 1.6 units per second he crosses South
+West London in a sixth of a second, which zoomed in is a blur, so while he is
+penned in an ICB his speed is scaled by that region's size against NHS Norfolk
+and Suffolk ICB. Every ICB then takes the same second or so to cross, whatever
+it is; regions bigger than the reference keep full speed and simply take longer.
 
 He wears the NHS identity colours (`#005eb8` blue, white), taken from the
 [NHS digital service manual](https://service-manual.nhs.uk/design-system/styles/colour).

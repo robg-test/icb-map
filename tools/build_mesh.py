@@ -90,7 +90,7 @@ OUT_INFO = os.path.join(ROOT, "assets", "regions.tsv")  # copy the app reads
 # --- tunables ---------------------------------------------------------------
 
 MAP_SIZE = 20.0  # longest horizontal extent, in world units
-SLAB_HEIGHT = 0.26  # extrusion height
+SLAB_HEIGHT = 0.26  # extrusion height, the same for every region
 BEVEL = 0.028  # horizontal inset of the top face (world units)
 SIMPLIFY_M = 200.0  # Douglas-Peucker tolerance, metres
 MIN_AREA_KM2 = 1.0  # drop islands smaller than this
@@ -684,10 +684,10 @@ def build():
     max_z = (max(zs) - cz) * scale
 
     mb = MeshBuilder()
-    h = SLAB_HEIGHT
     unbevelled = 0
     icb_index = 0
     ranges = []  # (first vertex, vertex count) per region, for highlighting
+    h = SLAB_HEIGHT
     for code, _, rings in regions:
         region_start = mb.count()
         if code[0] == "E":

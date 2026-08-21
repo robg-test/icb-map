@@ -133,11 +133,13 @@ test_land :: proc() -> Land {
 		surface_y = 0.26,
 		names     = make([]string, 1),
 		countries = make([]u8, 1),
+		extents   = make([]f32, 1),
 		cells     = make([]u16, 64 * 128),
 		raw       = nil, // no file behind this one, so nothing for raylib to free
 	}
 	land.names[0] = "Testshire"
 	land.countries[0] = 'E'
+	land.extents[0] = 3.2
 	for j in 0 ..< land.h {
 		for i in 0 ..< 32 {
 			land.cells[j * land.w + i] = 1
@@ -219,4 +221,101 @@ walker_faces_where_he_walks :: proc(t: ^testing.T) {
 		"walking east he faces %v rad",
 		w.facing,
 	)
+}
+
+@(test)
+walker_stays_inside_the_region_he_is_penned_to :: proc(t: ^testing.T) {
+	land, ok := load(t)
+	if !ok do return
+	defer land_unload(land)
+
+	// what focus mode does: pen him into the ICB he is standing in
+	for dir in ([?]rl.Vector3{{1, 0, 0}, {-1, 0, 0}, {0, 0, 1}, {0, 0, -1}}) {
+		w := walker_make(land)
+		w.confined = true
+		w.confine_to = w.district
+		for _ in 0 ..< 4000 {
+			walker_step(&w, land, dir, WALK_SPEED * RUN_MULT, 1.0 / 60)
+			if !testing.expectf(
+				t,
+				w.on_land && w.district == w.confine_to,
+				"left %v for %v heading %v",
+				land.names[w.confine_to],
+				w.on_land ? land.names[w.district] : "the sea",
+				dir,
+			) {
+				break
+			}
+		}
+	}
+}
+
+@(test)
+walker_roams_between_regions_when_not_penned :: proc(t: ^testing.T) {
+	land, ok := load(t)
+	if !ok do return
+	defer land_unload(land)
+
+	// the confinement must be opt-in, or focus mode would break the whole map
+	w := walker_make(land)
+	start := w.district
+	crossed := false
+	for _ in 0 ..< 4000 {
+		walker_step(&w, land, {0, 0, -1}, WALK_SPEED * RUN_MULT, 1.0 / 60)
+		if w.on_land && w.district != start {
+			crossed = true
+			break
+		}
+	}
+	testing.expect(t, crossed, "walking north never left the spawn region")
+}
+
+@(test)
+pace_only_changes_when_he_is_penned_in :: proc(t: ^testing.T) {
+	land, ok := load(t)
+	if !ok do return
+	defer land_unload(land)
+
+	w := walker_make(land)
+	testing.expect(t, walker_pace(w, land) == 1, "roaming the map should be full speed")
+
+	w.confined = true
+	w.confine_to = w.district
+	testing.expect(t, walker_pace(w, land) < 1, "penned into an ICB he should slow down")
+}
+
+@(test)
+penned_crossings_take_the_same_time_as_the_reference :: proc(t: ^testing.T) {
+	land, ok := load(t)
+	if !ok do return
+	defer land_unload(land)
+
+	reference := land_find(land, WALK_PACE_CODE)
+	if !testing.expectf(t, reference >= 0, "%v is not a region any more", WALK_PACE_CODE) {
+		return
+	}
+	want := land_extent(land, reference) / WALK_SPEED
+
+	// Anything up to the reference's size should take the same time to cross;
+	// bigger regions keep full speed and simply take longer.
+	for extent, region in land.extents {
+		if extent > land_extent(land, reference) {
+			continue
+		}
+		w := Walker {
+			district   = region,
+			confined   = true,
+			confine_to = region,
+			pace_ref   = reference,
+		}
+		crossing := extent / (WALK_SPEED * walker_pace(w, land))
+		testing.expectf(
+			t,
+			abs(crossing - want) < want * 0.01,
+			"%v takes %.2fs to cross, the reference takes %.2fs",
+			land.names[region],
+			crossing,
+			want,
+		)
+	}
 }

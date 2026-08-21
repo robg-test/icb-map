@@ -19,6 +19,7 @@ State :: struct {
 	land:     Land,
 	sea:      Sea,
 	badge:    Badge,
+	focus:    Focus,
 	panel:    Panel,
 	figure:   Figure,
 	fonts:    Fonts,
@@ -59,6 +60,7 @@ init :: proc() -> bool {
 	g.cam = orbit_make(g.overview, uk_radius(g.uk))
 	g.home = g.cam
 	g.walker = walker_make(g.land)
+	g.focus.region = -1
 	g.running = true
 	g.loaded = true
 	return true
@@ -77,10 +79,23 @@ update :: proc() {
 	dt := rl.GetFrameTime()
 
 	if rl.IsKeyPressed(.R) {
+		focus_leave(&g.focus, &g.cam, g.walker.pos)
 		g.cam = g.home
+		g.focus.settling = false
 		g.walker = walker_make(g.land)
 	}
-	if rl.IsKeyPressed(.SPACE) do g.cam.auto_spin = !g.cam.auto_spin
+	// Focus on the ICB he is standing in: everything else stops being drawn.
+	if rl.IsKeyPressed(.SPACE) {
+		if g.focus.on {
+			focus_leave(&g.focus, &g.cam, g.walker.pos)
+			g.walker.confined = false
+		} else if g.walker.on_land {
+			focus_enter(&g.focus, g.uk, g.land, &g.cam, g.walker.district)
+			// only pen him in if the region actually came up
+			g.walker.confined = g.focus.on
+			g.walker.confine_to = g.walker.district
+		}
+	}
 	if rl.IsKeyPressed(.P) do g.panel.open = !g.panel.open
 	if rl.IsKeyPressed(.TAB) {
 		g.cam.follow = !g.cam.follow
@@ -92,6 +107,7 @@ update :: proc() {
 	if g.cam.follow {
 		orbit_follow(&g.cam, g.walker.pos, dt)
 	}
+	focus_update(&g.focus, &g.cam, dt)
 	orbit_update(&g.cam, dt)
 
 	rl.BeginDrawing()
@@ -99,9 +115,13 @@ update :: proc() {
 
 	cam := orbit_rl(g.cam)
 	rl.BeginMode3D(cam)
-	sea_draw(g.sea)
-	rl.DrawModel(g.uk.model, {0, 0, 0}, 1, rl.WHITE)
-	walker_draw(g.walker, cam, &g.figure, g.badge)
+	if g.focus.on {
+		focus_draw(g.focus, g.land)
+	} else {
+		sea_draw(g.sea)
+		rl.DrawModel(g.uk.model, {0, 0, 0}, 1, rl.WHITE)
+	}
+	walker_draw(g.walker, &g.figure, &g.badge)
 	rl.EndMode3D()
 
 	draw_hud(g.fonts)
@@ -126,6 +146,7 @@ shutdown :: proc() {
 		uk_unload(g.uk)
 		land_unload(g.land)
 		sea_unload(g.sea)
+		focus_unload(&g.focus)
 		badge_unload(g.badge)
 		panel_unload(g.panel)
 		figure_unload(g.figure)

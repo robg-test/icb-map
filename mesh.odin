@@ -158,3 +158,52 @@ uk_centre :: proc(m: Uk_Map) -> rl.Vector3 {
 uk_radius :: proc(m: Uk_Map) -> f32 {
 	return max(m.max_x - m.min_x, m.max_z - m.min_z) / 2
 }
+
+// Bounding box of one region, as a centre and the radius of the larger of its
+// two horizontal extents. Used to frame it when focus mode zooms in.
+uk_region_bounds :: proc(m: Uk_Map, region: int) -> (centre: rl.Vector3, radius: f32) {
+	if region < 0 || region >= len(m.ranges) || m.ranges[region][1] == 0 {
+		return uk_centre(m), uk_radius(m)
+	}
+	start := int(m.ranges[region][0])
+	count := int(m.ranges[region][1])
+	v := m.model.meshes[0].vertices
+
+	lo := rl.Vector3{max(f32), max(f32), max(f32)}
+	hi := rl.Vector3{min(f32), min(f32), min(f32)}
+	for i in start ..< start + count {
+		p := rl.Vector3{v[i * 3], v[i * 3 + 1], v[i * 3 + 2]}
+		lo = rl.Vector3Min(lo, p)
+		hi = rl.Vector3Max(hi, p)
+	}
+	return (lo + hi) / 2, max(hi.x - lo.x, hi.z - lo.z) / 2
+}
+
+// One region lifted out into a model of its own. raylib draws a whole mesh or
+// nothing, so showing a single ICB means giving it its own buffers; at ~7k
+// vertices that is cheap enough to redo when he crosses into a neighbour.
+//
+// Colours come from `base`, not from the live buffer: on its own the region is
+// not "the one you are in" any more, so the highlight gain would just make it
+// read as the wrong colour.
+uk_region_model :: proc(m: Uk_Map, region: int) -> (model: rl.Model, ok: bool) {
+	if region < 0 || region >= len(m.ranges) || m.ranges[region][1] == 0 {
+		return {}, false
+	}
+	start := int(m.ranges[region][0])
+	count := int(m.ranges[region][1])
+
+	src := m.model.meshes[0]
+	mesh: rl.Mesh
+	mesh.vertexCount = i32(count)
+	mesh.triangleCount = i32(count / 3)
+	mesh.vertices = cast([^]f32)rl.MemAlloc(c.uint(count * 3 * size_of(f32)))
+	mesh.normals = cast([^]f32)rl.MemAlloc(c.uint(count * 3 * size_of(f32)))
+	mesh.colors = cast([^]u8)rl.MemAlloc(c.uint(count * 4))
+	mem.copy(mesh.vertices, &src.vertices[start * 3], count * 3 * size_of(f32))
+	mem.copy(mesh.normals, &src.normals[start * 3], count * 3 * size_of(f32))
+	mem.copy(mesh.colors, raw_data(m.base[start * 4:]), count * 4)
+
+	rl.UploadMesh(&mesh, false) // static: nothing rewrites these
+	return rl.LoadModelFromMesh(mesh), true
+}

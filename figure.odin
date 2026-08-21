@@ -43,8 +43,8 @@ Builder :: struct {
 	bases: [dynamic]rl.Color,
 }
 
-@(private = "file")
-shade :: proc(base: rl.Color, normal, light: rl.Vector3) -> rl.Color {
+// Shared with badge.odin so the logo panel is lit exactly like the body it sits on.
+figure_shade :: proc(base: rl.Color, normal, light: rl.Vector3) -> rl.Color {
 	k := FIGURE_AMBIENT + (1 - FIGURE_AMBIENT) * max(0, rl.Vector3DotProduct(normal, light))
 	return {
 		u8(clamp(f32(base.r) * k, 0, 255)),
@@ -154,8 +154,8 @@ figure_build :: proc() -> Figure {
 	bar(&b, {0, 0, 0}, {0, PLINTH_H, 0}, PLINTH_R, PLINTH_R, NHS_WHITE)
 	disc(&b, {0, PLINTH_H, 0}, PLINTH_R, {0, 1, 0}, NHS_WHITE)
 	// torso, tapering in towards the shoulders
-	bar(&b, {0, PLINTH_H, 0}, {0, TORSO_TOP, 0}, 0.072, 0.048, NHS_BLUE)
-	disc(&b, {0, TORSO_TOP, 0}, 0.048, {0, 1, 0}, NHS_BLUE)
+	bar(&b, {0, PLINTH_H, 0}, {0, TORSO_TOP, 0}, TORSO_R_BASE, TORSO_R_TOP, NHS_BLUE)
+	disc(&b, {0, TORSO_TOP, 0}, TORSO_R_TOP, {0, 1, 0}, NHS_BLUE)
 	// arms, spanning across the direction of travel, rounded off at the ends
 	shoulder := rl.Vector3{0, SHOULDER_Y, 0}
 	bar(&b, shoulder - {ARM_SPAN, 0, 0}, shoulder + {ARM_SPAN, 0, 0}, 0.023, 0.023, NHS_BLUE)
@@ -199,16 +199,21 @@ figure_build :: proc() -> Figure {
 	return fig
 }
 
+// The world light expressed in the model space of a figure rotated by `facing`:
+// the inverse of the model's rotation about Y, applied to the light.
+figure_light_local :: proc(facing: f32) -> rl.Vector3 {
+	c, s := math.cos(facing), math.sin(facing)
+	light := rl.Vector3Normalize(FIGURE_LIGHT)
+	return {light.x * c - light.z * s, light.y, light.x * s + light.z * c}
+}
+
 // Re-shade for a given facing by rotating the light into model space.
 @(private = "file")
 figure_bake :: proc(fig: ^Figure, facing: f32) {
-	c, s := math.cos(facing), math.sin(facing)
-	light := rl.Vector3Normalize(FIGURE_LIGHT)
-	// inverse of the model's rotation about Y
-	local := rl.Vector3{light.x * c - light.z * s, light.y, light.x * s + light.z * c}
+	local := figure_light_local(facing)
 
 	for i in 0 ..< len(fig.normals) {
-		col := shade(fig.bases[i], fig.normals[i], local)
+		col := figure_shade(fig.bases[i], fig.normals[i], local)
 		fig.colours[i * 4 + 0] = col.r
 		fig.colours[i * 4 + 1] = col.g
 		fig.colours[i * 4 + 2] = col.b
@@ -217,7 +222,7 @@ figure_bake :: proc(fig: ^Figure, facing: f32) {
 	fig.baked = facing
 }
 
-figure_draw :: proc(fig: ^Figure, position: rl.Vector3, facing: f32) {
+figure_draw :: proc(fig: ^Figure, position: rl.Vector3, facing, scale: f32) {
 	if !fig.loaded {
 		return
 	}
@@ -237,7 +242,7 @@ figure_draw :: proc(fig: ^Figure, position: rl.Vector3, facing: f32) {
 		position,
 		{0, 1, 0},
 		facing * 180 / math.PI,
-		{1, 1, 1},
+		scale,
 		rl.WHITE,
 	)
 }

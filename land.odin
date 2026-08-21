@@ -22,6 +22,10 @@ Land :: struct {
 	names:     []string,
 	codes:     []string, // join key for the region info table
 	countries: []u8, // 'E', 'S', 'W', 'N'
+	// How big each region is. Every slab is the same thickness on the map, but
+	// focus mode squashes the one it is showing by this, and sizes the walker
+	// against it -- see focus.odin.
+	extents:   []f32, // sqrt of each region's area, in world units
 	cells:     []u16,
 	raw:       []byte, // backs `names`, so it outlives the load
 }
@@ -89,10 +93,37 @@ land_load :: proc(path: string) -> (land: Land, ok: bool) {
 	land.cells = make([]u16, land.w * land.h)
 	mem.copy(raw_data(land.cells), raw_data(data[off:]), cell_bytes)
 
+	land_measure(&land)
 	return land, true
 }
 
+// How big each region is, as the side of a square of the same area. Counted off
+// the grid rather than stored: the grid is already the app's idea of where a
+// region is, and one pass over half a million cells at load is nothing.
+@(private = "file")
+land_measure :: proc(land: ^Land) {
+	counts := make([]int, len(land.names))
+	defer delete(counts)
+	for value in land.cells {
+		if value != 0 && int(value) <= len(counts) {
+			counts[value - 1] += 1
+		}
+	}
+	land.extents = make([]f32, len(land.names))
+	for n, i in counts {
+		land.extents[i] = math.sqrt(f32(n)) * land.cell
+	}
+}
+
+land_extent :: proc(land: Land, district: int) -> f32 {
+	if district < 0 || district >= len(land.extents) {
+		return 0
+	}
+	return land.extents[district]
+}
+
 land_unload :: proc(land: Land) {
+	delete(land.extents)
 	delete(land.cells)
 	delete(land.countries)
 	delete(land.codes)
@@ -133,6 +164,17 @@ land_country :: proc(land: Land, district: int) -> string {
 // Where the walker starts. Somewhere with data on it beats the geometric middle
 // of the map, which lands in Scotland where the NHS columns are all dashes.
 SPAWN_CODE :: "E54000054" // NHS West Yorkshire ICB
+
+// Region index for an ONS code, or -1. Only used at load, so a linear scan over
+// 39 regions is the whole of it.
+land_find :: proc(land: Land, code: string) -> int {
+	for candidate, i in land.codes {
+		if candidate == code {
+			return i
+		}
+	}
+	return -1
+}
 
 land_spawn :: proc(land: Land) -> rl.Vector3 {
 	for code, i in land.codes {

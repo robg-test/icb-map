@@ -29,3 +29,6 @@ __pycache__/
 .playwright-mcp/
 .DS_Store
 *.swp
+
+# Windows download provenance stubs (WSL keeps these next to the file)
+*:Zone.Identifier

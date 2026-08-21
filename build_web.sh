@@ -26,11 +26,16 @@ odin build web \
 ODIN_PATH=$(odin root)
 cp "$ODIN_PATH/core/sys/wasm/js/odin.js" "$OUT_DIR"
 
+# Odin renamed the prebuilt wasm raylib to libraylib.web.a; older trees use
+# libraylib.a. Take whichever this checkout ships.
+RAYLIB_WASM_LIB_PATH="$ODIN_PATH/vendor/raylib/wasm/libraylib.web.a"
+[[ -f "$RAYLIB_WASM_LIB_PATH" ]] || RAYLIB_WASM_LIB_PATH="$ODIN_PATH/vendor/raylib/wasm/libraylib.a"
+
 # ALLOW_MEMORY_GROWTH because the mesh is 15 MB and is copied once on upload.
 emcc \
 	-o "$OUT_DIR/index.html" \
 	"$OUT_DIR/ukmap.wasm.obj" \
-	"$ODIN_PATH/vendor/raylib/wasm/libraylib.a" \
+	"$RAYLIB_WASM_LIB_PATH" \
 	-sEXPORTED_RUNTIME_METHODS="['HEAPF32']" \
 	-sUSE_GLFW=3 \
 	-sWASM_BIGINT \
